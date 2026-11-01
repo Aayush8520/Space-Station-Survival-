@@ -17,7 +17,10 @@ public class SpaceMissionGame extends JPanel
     private static final int MARS = 5;
     private static final int WIN = 6;
     private static final int LOSE = 7;
-
+ 
+private static final int ECO_MODE = 0;
+private static final int NORMAL_MODE = 1;
+private static final int BOOST_MODE = 2;
     private int stage = READY;
     private int stageTimer = 0;
     private int score = 0;
@@ -31,6 +34,11 @@ public class SpaceMissionGame extends JPanel
     private double oxygen = 100;
     private double energy = 100;
     private double equipment = 100;
+
+    private int travelMode = NORMAL_MODE;
+private double currentRocketSpeed = 0;
+private double landingSpeed = 5.0;
+private boolean hardLanding = false;
 
     private boolean up;
     private boolean down;
@@ -178,19 +186,65 @@ private double marsAstronautX = 750;
     }
        private void updateMarsLanding() {
     if (!marsLanded) {
-        marsRocketY += 5.0;
+// Aayush: control the rocket's landing speed
+if (up) {
+    landingSpeed = Math.max(
+            1.0,
+            landingSpeed - 0.08
+    );
+}
+
+if (down) {
+    landingSpeed = Math.min(
+            9.0,
+            landingSpeed + 0.08
+    );
+}
+
+marsRocketY += landingSpeed;
         message = "Victory rocket is landing on Mars";
 
-        if (marsRocketY >= 545) {
-            marsRocketY = 545;
-            marsLanded = true;
-            marsExitTimer = 75;
-            message = "Landing successful";
-        }
+      if (marsRocketY >= 545) {
+    marsRocketY = 545;
+    marsLanded = true;
+    marsExitTimer = 75;
+
+    // Check whether the landing was safe
+    if (landingSpeed > 4.0) {
+        hardLanding = true;
+
+        equipment = Math.max(
+                0,
+                equipment - 30
+        );
+
+        message =
+                "HARD LANDING! Rocket equipment was damaged";
+
+    } else {
+        hardLanding = false;
+
+        message =
+                "SAFE LANDING! Victory rocket landed successfully";
+    }
+}
 
     } else if (marsExitTimer > 0) {
-        marsExitTimer--;
-        message = "Preparing Sky and Rain for Mars exploration";
+    marsExitTimer--;
+
+    // Keep the landing result visible before astronauts exit
+    if (marsExitTimer > 25) {
+        if (hardLanding) {
+            message =
+                    "HARD LANDING! Rocket equipment was damaged";
+        } else {
+            message =
+                    "SAFE LANDING! Victory rocket landed successfully";
+        }
+    } else {
+        message =
+                "Preparing Sky and Rain for Mars exploration";
+    }
 
     } else if (marsAstronautX > 610) {
         marsAstronautX -= 2.0;
@@ -201,9 +255,29 @@ private double marsAstronautX = 750;
         message = "Victory Crew is ready to explore Mars";
     }
 }
-    private void updateSpaceMission() {
-        double speed =
-                equipmentBroken ? 1.8 : 4.0;
+  private void updateSpaceMission() {
+    double speed = getModeSpeed();
+
+    // Damaged equipment makes the rocket slower
+    if (equipmentBroken) {
+        speed = speed * 0.45;
+    }
+
+  boolean tryingToMove =
+        up || down || left || right;
+
+// Display the actual speed only while moving
+if (tryingToMove) {
+    currentRocketSpeed = speed;
+} else {
+    currentRocketSpeed = 0;
+}
+    // Stop the rocket when there is no fuel
+    if (tryingToMove && fuel <= 0) {
+        currentRocketSpeed = 0;
+        message = "Cannot fly - the fuel tank is empty";
+        return;
+    }
 
         if (up && rocketY > 95) {
             rocketY -= speed;
@@ -221,9 +295,12 @@ private double marsAstronautX = 750;
             rocketX += speed;
         }
 
-        if (up || down || left || right) {
-            fuel -= 0.025;
-        }
+        if (tryingToMove) {
+    fuel = Math.max(
+            0,
+            fuel - getModeFuelUsage()
+    );
+}
 
         oxygen -= 0.006;
         energy -= 0.004;
@@ -298,7 +375,43 @@ message = "Approaching the Mars landing site";
                     "MARS REACHED! The rocket landed safely";
         }
     }
+// Aayush: speed used by each spacecraft travel mode
+private double getModeSpeed() {
+    if (travelMode == ECO_MODE) {
+        return 2.5;
+    }
 
+    if (travelMode == BOOST_MODE) {
+        return 6.5;
+    }
+
+    return 4.0;
+}
+
+//  fuel consumed by each spacecraft travel mode
+private double getModeFuelUsage() {
+    if (travelMode == ECO_MODE) {
+        return 0.012;
+    }
+
+    if (travelMode == BOOST_MODE) {
+        return 0.060;
+    }
+
+    return 0.025;
+}
+//  name of the currently selected travel mode
+private String getTravelModeName() {
+    if (travelMode == ECO_MODE) {
+        return "ECO";
+    }
+
+    if (travelMode == BOOST_MODE) {
+        return "BOOST";
+    }
+
+    return "NORMAL";
+}
     private void resetAsteroids() {
         for (int i = 0;
              i < asteroidX.length;
@@ -2049,7 +2162,9 @@ if (marsLanded && marsExitTimer <= 0) {
         g.fillRoundRect(
                 45,
                 669,
-                stage == SPACE ? 290 : 210,
+               stage == SPACE
+        ? 430
+        : (stage == MARS && !marsLanded ? 360 : 210),
                 34,
                 12,
                 12
@@ -2073,11 +2188,16 @@ if (marsLanded && marsExitTimer <= 0) {
 
         } else if (stage == SPACE) {
             controls =
-                    "ARROW KEYS: Fly     R: Repair     N: Restart";
+                   "ARROWS: Fly    1: Eco    2: Normal    3: Boost    R: Repair    N: Restart";
 
-        } else if (stage == MARS) {
-            controls =
-                    "MARS LANDED     N: Restart";
+       } else if (stage == MARS) {
+    if (!marsLanded) {
+        controls =
+                "UP: Slow Down    DOWN: Speed Up    N: Restart";
+    } else {
+        controls =
+                "MARS LANDED     N: Restart";
+    }
 
         } else {
             controls =
@@ -2089,6 +2209,96 @@ if (marsLanded && marsExitTimer <= 0) {
                 58,
                 690
         );
+        //  spacecraft information shown during space travel
+if (stage == SPACE) {
+    g.setColor(new Color(10, 30, 48, 215));
+    g.fillRoundRect(
+            775,
+            669,
+            280,
+            34,
+            12,
+            12
+    );
+
+    g.setColor(Color.WHITE);
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    13
+            )
+    );
+
+    String spacecraftInfo =
+            "MODE: " + getTravelModeName()
+                    + "     SPEED: "
+                    + String.format("%.1f", currentRocketSpeed);
+
+    g.drawString(
+            spacecraftInfo,
+            792,
+            690
+    );
+}
+// Aayush: Mars landing-speed meter
+if (stage == MARS && !marsLanded) {
+    g.setColor(new Color(10, 30, 48, 215));
+    g.fillRoundRect(
+            755,
+            669,
+            300,
+            34,
+            12,
+            12
+    );
+
+    g.setColor(Color.WHITE);
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    13
+            )
+    );
+
+    g.drawString(
+            "LANDING SPEED: "
+                    + String.format("%.1f", landingSpeed),
+            770,
+            690
+    );
+
+    // Meter background
+    g.setColor(new Color(55, 70, 80));
+    g.fillRoundRect(
+            920,
+            678,
+            120,
+            10,
+            6,
+            6
+    );
+
+    // Green means safe; red means unsafe
+    if (landingSpeed <= 4.0) {
+        g.setColor(new Color(70, 210, 110));
+    } else {
+        g.setColor(new Color(230, 75, 65));
+    }
+
+    int landingMeterWidth =
+            (int) (120 * landingSpeed / 9.0);
+
+    g.fillRoundRect(
+            920,
+            678,
+            landingMeterWidth,
+            10,
+            6,
+            6
+    );
+}
         g.translate(0, 14);
     }
 
@@ -2224,6 +2434,11 @@ if (marsLanded && marsExitTimer <= 0) {
         energy = 100;
         equipment = 100;
 
+// Reset  spacecraft system
+travelMode = NORMAL_MODE;
+currentRocketSpeed = 0;
+landingSpeed = 5.0;
+hardLanding = false;
         equipmentBroken = false;
 
         up = false;
@@ -2251,6 +2466,20 @@ if (marsLanded && marsExitTimer <= 0) {
     message = "Sky and Rain are waving before boarding";
 }
 
+if (stage == SPACE && pressedKey == KeyEvent.VK_1) {
+    travelMode = ECO_MODE;
+    message = "ECO mode selected - low speed and low fuel usage";
+}
+
+if (stage == SPACE && pressedKey == KeyEvent.VK_2) {
+    travelMode = NORMAL_MODE;
+    message = "NORMAL mode selected - balanced travel";
+}
+
+if (stage == SPACE && pressedKey == KeyEvent.VK_3) {
+    travelMode = BOOST_MODE;
+    message = "BOOST mode selected - high speed and high fuel usage";
+}
         if (pressedKey == KeyEvent.VK_UP) {
             up = true;
         }
