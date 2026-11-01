@@ -2323,6 +2323,11 @@ if (stage == SPACE) {
         energy = 100;
         equipment = 100;
 
+// Reset  spacecraft system
+travelMode = NORMAL_MODE;
+currentRocketSpeed = 0;
+landingSpeed = 5.0;
+hardLanding = false;
         equipmentBroken = false;
 
         up = false;
