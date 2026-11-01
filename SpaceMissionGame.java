@@ -1904,7 +1904,7 @@ private String getTravelModeName() {
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 11));
             String controls = stage == EXPLORE
-                    ? "ARROWS: Move   SPACE: Jump   Q: Switch   P: Photo   N: Restart"
+                    ?"ARROWS: Move   SPACE: Jump   Q: Switch   P: Photo   R: Repair   N: Restart"
                     : "MARS LANDED   N: Restart";
             g.drawString(controls, 328, 134);
 
@@ -2160,7 +2160,8 @@ private String getTravelModeName() {
 
         // R: only the Engineer can repair
         
-        if (pressedKey == KeyEvent.VK_R && stage == SPACE) {
+        if (pressedKey == KeyEvent.VK_R
+        && (stage == SPACE || stage == EXPLORE)) {
 
             if (activeAstronaut() != engineer) {
                 message = "Switch to Sky (Q) to repair equipment";
