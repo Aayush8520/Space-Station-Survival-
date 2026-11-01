@@ -230,8 +230,21 @@ marsRocketY += landingSpeed;
 }
 
     } else if (marsExitTimer > 0) {
-        marsExitTimer--;
-        message = "Preparing Sky and Rain for Mars exploration";
+    marsExitTimer--;
+
+    // Keep the landing result visible before astronauts exit
+    if (marsExitTimer > 25) {
+        if (hardLanding) {
+            message =
+                    "HARD LANDING! Rocket equipment was damaged";
+        } else {
+            message =
+                    "SAFE LANDING! Victory rocket landed successfully";
+        }
+    } else {
+        message =
+                "Preparing Sky and Rain for Mars exploration";
+    }
 
     } else if (marsAstronautX > 610) {
         marsAstronautX -= 2.0;
