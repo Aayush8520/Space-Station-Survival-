@@ -204,12 +204,30 @@ if (down) {
 marsRocketY += landingSpeed;
         message = "Victory rocket is landing on Mars";
 
-        if (marsRocketY >= 545) {
-            marsRocketY = 545;
-            marsLanded = true;
-            marsExitTimer = 75;
-            message = "Landing successful";
-        }
+      if (marsRocketY >= 545) {
+    marsRocketY = 545;
+    marsLanded = true;
+    marsExitTimer = 75;
+
+    // Check whether the landing was safe
+    if (landingSpeed > 4.0) {
+        hardLanding = true;
+
+        equipment = Math.max(
+                0,
+                equipment - 30
+        );
+
+        message =
+                "HARD LANDING! Rocket equipment was damaged";
+
+    } else {
+        hardLanding = false;
+
+        message =
+                "SAFE LANDING! Victory rocket landed successfully";
+    }
+}
 
     } else if (marsExitTimer > 0) {
         marsExitTimer--;
