@@ -2221,6 +2221,64 @@ if (stage == SPACE) {
             690
     );
 }
+// Aayush: Mars landing-speed meter
+if (stage == MARS && !marsLanded) {
+    g.setColor(new Color(10, 30, 48, 215));
+    g.fillRoundRect(
+            755,
+            669,
+            300,
+            34,
+            12,
+            12
+    );
+
+    g.setColor(Color.WHITE);
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    13
+            )
+    );
+
+    g.drawString(
+            "LANDING SPEED: "
+                    + String.format("%.1f", landingSpeed),
+            770,
+            690
+    );
+
+    // Meter background
+    g.setColor(new Color(55, 70, 80));
+    g.fillRoundRect(
+            920,
+            678,
+            120,
+            10,
+            6,
+            6
+    );
+
+    // Green means safe; red means unsafe
+    if (landingSpeed <= 4.0) {
+        g.setColor(new Color(70, 210, 110));
+    } else {
+        g.setColor(new Color(230, 75, 65));
+    }
+
+    int landingMeterWidth =
+            (int) (120 * landingSpeed / 9.0);
+
+    g.fillRoundRect(
+            920,
+            678,
+            landingMeterWidth,
+            10,
+            6,
+            6
+    );
+}
         g.translate(0, 14);
     }
 
