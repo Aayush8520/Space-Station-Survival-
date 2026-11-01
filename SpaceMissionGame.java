@@ -209,9 +209,25 @@ private double marsAstronautX = 750;
         message = "Victory Crew is ready to explore Mars";
     }
 }
-    private void updateSpaceMission() {
-        double speed =
-                equipmentBroken ? 1.8 : 4.0;
+  private void updateSpaceMission() {
+    double speed = getModeSpeed();
+
+    // Damaged equipment makes the rocket slower
+    if (equipmentBroken) {
+        speed = speed * 0.45;
+    }
+
+    currentRocketSpeed = speed;
+
+    boolean tryingToMove =
+            up || down || left || right;
+
+    // Stop the rocket when there is no fuel
+    if (tryingToMove && fuel <= 0) {
+        currentRocketSpeed = 0;
+        message = "Cannot fly - the fuel tank is empty";
+        return;
+    }
 
         if (up && rocketY > 95) {
             rocketY -= speed;
