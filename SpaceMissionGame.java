@@ -217,11 +217,15 @@ private double marsAstronautX = 750;
         speed = speed * 0.45;
     }
 
+  boolean tryingToMove =
+        up || down || left || right;
+
+// Display the actual speed only while moving
+if (tryingToMove) {
     currentRocketSpeed = speed;
-
-    boolean tryingToMove =
-            up || down || left || right;
-
+} else {
+    currentRocketSpeed = 0;
+}
     // Stop the rocket when there is no fuel
     if (tryingToMove && fuel <= 0) {
         currentRocketSpeed = 0;
@@ -2152,6 +2156,38 @@ if (marsLanded && marsExitTimer <= 0) {
                 58,
                 690
         );
+        //  spacecraft information shown during space travel
+if (stage == SPACE) {
+    g.setColor(new Color(10, 30, 48, 215));
+    g.fillRoundRect(
+            775,
+            669,
+            280,
+            34,
+            12,
+            12
+    );
+
+    g.setColor(Color.WHITE);
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    13
+            )
+    );
+
+    String spacecraftInfo =
+            "MODE: " + getTravelModeName()
+                    + "     SPEED: "
+                    + String.format("%.1f", currentRocketSpeed);
+
+    g.drawString(
+            spacecraftInfo,
+            792,
+            690
+    );
+}
         g.translate(0, 14);
     }
 
