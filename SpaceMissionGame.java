@@ -306,7 +306,31 @@ message = "Approaching the Mars landing site";
                     "MARS REACHED! The rocket landed safely";
         }
     }
+// Aayush: speed used by each spacecraft travel mode
+private double getModeSpeed() {
+    if (travelMode == ECO_MODE) {
+        return 2.5;
+    }
 
+    if (travelMode == BOOST_MODE) {
+        return 6.5;
+    }
+
+    return 4.0;
+}
+
+// Aayush: fuel consumed by each spacecraft travel mode
+private double getModeFuelUsage() {
+    if (travelMode == ECO_MODE) {
+        return 0.012;
+    }
+
+    if (travelMode == BOOST_MODE) {
+        return 0.060;
+    }
+
+    return 0.025;
+}
     private void resetAsteroids() {
         for (int i = 0;
              i < asteroidX.length;
