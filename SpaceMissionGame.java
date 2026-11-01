@@ -186,7 +186,22 @@ private double marsAstronautX = 750;
     }
        private void updateMarsLanding() {
     if (!marsLanded) {
-        marsRocketY += 5.0;
+// Aayush: control the rocket's landing speed
+if (up) {
+    landingSpeed = Math.max(
+            1.0,
+            landingSpeed - 0.08
+    );
+}
+
+if (down) {
+    landingSpeed = Math.min(
+            9.0,
+            landingSpeed + 0.08
+    );
+}
+
+marsRocketY += landingSpeed;
         message = "Victory rocket is landing on Mars";
 
         if (marsRocketY >= 545) {
