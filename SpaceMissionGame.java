@@ -35,6 +35,11 @@ private static final int BOOST_MODE = 2;
     private double energy = 100;
     private double equipment = 100;
 
+    private int travelMode = NORMAL_MODE;
+private double currentRocketSpeed = 0;
+private double landingSpeed = 5.0;
+private boolean hardLanding = false;
+
     private boolean up;
     private boolean down;
     private boolean left;
