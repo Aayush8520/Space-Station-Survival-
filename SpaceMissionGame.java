@@ -24,6 +24,14 @@ public class SpaceMissionGame extends JPanel
     private static final int LOSE = 7;
     private static final int EXPLORE = 8;      // walking on the Martian surface
 
+    private static final int ECO_MODE = 0;
+    private static final int NORMAL_MODE = 1;
+    private static final int BOOST_MODE = 2;
+    private int travelMode = NORMAL_MODE;
+    private double currentRocketSpeed = 0;
+    private double landingSpeed = 5.0;
+    private boolean hardLanding = false;
+
     private int stage = READY;
     private int stageTimer = 0;
     private int score = 0;
@@ -371,24 +379,26 @@ public class SpaceMissionGame extends JPanel
 
     private void updateMarsLanding() {
         if (!marsLanded) {
-            marsRocketY += 5.0;
-            message = "Victory rocket is landing on Mars";
-
+            if (up) landingSpeed = Math.max(1.0, landingSpeed - 0.08);
+            if (down) landingSpeed = Math.min(9.0, landingSpeed + 0.08);
+            marsRocketY += landingSpeed;
+            message = "UP: Slow Down   DOWN: Speed Up";
             if (marsRocketY >= 545) {
                 marsRocketY = 545;
                 marsLanded = true;
                 marsExitTimer = 75;
-                message = "Landing successful";
+                hardLanding = landingSpeed > 4.0;
+                if (hardLanding) equipment = Math.max(0, equipment - 30);
+                message = hardLanding ? "HARD LANDING! Equipment damaged" : "SAFE LANDING!";
             }
-
         } else if (marsExitTimer > 0) {
             marsExitTimer--;
-            message = "Preparing Sky and Rain for Mars exploration";
-
+            message = marsExitTimer > 25
+                    ? (hardLanding ? "HARD LANDING! Equipment damaged" : "SAFE LANDING!")
+                    : "Preparing Sky and Rain for Mars exploration";
         } else if (marsAstronautX > 610) {
             marsAstronautX -= 2.0;
             message = "Sky and Rain are leaving the rocket";
-
         } else {
             marsAstronautX = 610;
             startMarsExploration();
@@ -433,8 +443,14 @@ public class SpaceMissionGame extends JPanel
     }
 
     private void updateSpaceMission() {
-        double speed =
-                equipmentBroken ? 1.8 : 4.0;
+        double speed = getModeSpeed();
+        if (equipmentBroken) speed *= 0.45;
+        boolean tryingToMove = up || down || left || right;
+        currentRocketSpeed = tryingToMove && fuel > 0 ? speed : 0;
+        if (tryingToMove && fuel <= 0) {
+            message = "Cannot fly - the fuel tank is empty";
+            return;
+        }
 
         if (up && rocketY > 95) {
             rocketY -= speed;
@@ -453,7 +469,7 @@ public class SpaceMissionGame extends JPanel
         }
 
         if (up || down || left || right) {
-            fuel -= 0.025;
+            fuel = Math.max(0, fuel - getModeFuelUsage());
         }
 
         // Oxygen is now drawn from the Astronaut objects every 5 seconds
@@ -521,6 +537,42 @@ public class SpaceMissionGame extends JPanel
         }
     }
 
+    private double getModeSpeed() {
+    if (travelMode == ECO_MODE) {
+        return 2.5;
+    }
+
+    if (travelMode == BOOST_MODE) {
+        return 6.5;
+    }
+
+    return 4.0;
+}
+
+//  fuel consumed by each spacecraft travel mode
+private double getModeFuelUsage() {
+    if (travelMode == ECO_MODE) {
+        return 0.012;
+    }
+
+    if (travelMode == BOOST_MODE) {
+        return 0.060;
+    }
+
+    return 0.025;
+}
+//  name of the currently selected travel mode
+private String getTravelModeName() {
+    if (travelMode == ECO_MODE) {
+        return "ECO";
+    }
+
+    if (travelMode == BOOST_MODE) {
+        return "BOOST";
+    }
+
+    return "NORMAL";
+}
     private void resetAsteroids() {
         asteroids.clear();
         for (int i = 0; i < 10; i++) {
@@ -1837,10 +1889,10 @@ public class SpaceMissionGame extends JPanel
         // controls below the top dashboard, away from feet and footprints.
         if (stage < SPACE) {
             g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(20, 669, 250, 34, 12, 12);
+            g.fillRoundRect(55, 650, 292, 34, 12, 12);
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            g.drawString("ENTER: Start    N: Restart", 35, 690);
+            g.drawString("ENTER: Start    N: Restart", 70, 672);
         } else if (stage == MARS || stage == EXPLORE
                 || ((stage == WIN || stage == LOSE) && reachedMars)) {
             // The resource report occupies x=20..300, so these two panels
@@ -1861,6 +1913,27 @@ public class SpaceMissionGame extends JPanel
             String status = "Active: " + active.getName() + " (" + role + ")"
                     + "   Photos: " + photographer.getPhotosTaken();
             g.drawString(status, 832, 134);
+        }
+
+        if (stage == SPACE) {
+            g.setColor(new Color(10, 30, 48, 215));
+            g.fillRoundRect(45, 650, 520, 34, 12, 12);
+            g.fillRoundRect(775, 650, 280, 34, 12, 12);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            g.drawString("ARROWS: Fly   1: Eco   2: Normal   3: Boost   R: Repair   N: Restart", 58, 672);
+            g.drawString("MODE: " + getTravelModeName() + "   SPEED: "
+                    + String.format("%.1f", currentRocketSpeed), 792, 672);
+        } else if (stage == MARS && !marsLanded) {
+            g.setColor(new Color(10, 30, 48, 215));
+            g.fillRoundRect(755, 650, 300, 34, 12, 12);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            g.drawString("LANDING SPEED: " + String.format("%.1f", landingSpeed), 770, 672);
+            g.setColor(new Color(55, 70, 80));
+            g.fillRoundRect(920, 660, 120, 10, 6, 6);
+            g.setColor(landingSpeed <= 4.0 ? new Color(70, 210, 110) : new Color(230, 75, 65));
+            g.fillRoundRect(920, 660, (int)(120 * landingSpeed / 9.0), 10, 6, 6);
         }
 
         g.translate(0, 14);
@@ -2020,6 +2093,10 @@ public class SpaceMissionGame extends JPanel
         marsStepTimer = 0;
         walkTimer = 0;
         walker.reset();
+        travelMode = NORMAL_MODE;
+        currentRocketSpeed = 0;
+        landingSpeed = 5.0;
+        hardLanding = false;
 
         createCrew();
         panel = new SolarPanel();
@@ -2038,6 +2115,17 @@ public class SpaceMissionGame extends JPanel
             stage = BOARDING;
             stageTimer = 100;
             message = "Sky and Rain are waving before boarding";
+        }
+
+        if (stage == SPACE && pressedKey == KeyEvent.VK_1) {
+            travelMode = ECO_MODE;
+            message = "ECO mode selected";
+        } else if (stage == SPACE && pressedKey == KeyEvent.VK_2) {
+            travelMode = NORMAL_MODE;
+            message = "NORMAL mode selected";
+        } else if (stage == SPACE && pressedKey == KeyEvent.VK_3) {
+            travelMode = BOOST_MODE;
+            message = "BOOST mode selected";
         }
 
         if (pressedKey == KeyEvent.VK_UP) {
