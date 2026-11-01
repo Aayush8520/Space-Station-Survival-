@@ -2302,6 +2302,20 @@ if (marsLanded && marsExitTimer <= 0) {
     message = "Sky and Rain are waving before boarding";
 }
 
+if (stage == SPACE && pressedKey == KeyEvent.VK_1) {
+    travelMode = ECO_MODE;
+    message = "ECO mode selected - low speed and low fuel usage";
+}
+
+if (stage == SPACE && pressedKey == KeyEvent.VK_2) {
+    travelMode = NORMAL_MODE;
+    message = "NORMAL mode selected - balanced travel";
+}
+
+if (stage == SPACE && pressedKey == KeyEvent.VK_3) {
+    travelMode = BOOST_MODE;
+    message = "BOOST mode selected - high speed and high fuel usage";
+}
         if (pressedKey == KeyEvent.VK_UP) {
             up = true;
         }
