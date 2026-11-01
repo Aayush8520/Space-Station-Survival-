@@ -2116,7 +2116,7 @@ if (marsLanded && marsExitTimer <= 0) {
         g.fillRoundRect(
                 45,
                 669,
-                stage == SPACE ? 290 : 210,
+                stage == SPACE ? 430 : 210,
                 34,
                 12,
                 12
@@ -2140,7 +2140,7 @@ if (marsLanded && marsExitTimer <= 0) {
 
         } else if (stage == SPACE) {
             controls =
-                    "ARROW KEYS: Fly     R: Repair     N: Restart";
+                   "ARROWS: Fly    1: Eco    2: Normal    3: Boost    R: Repair    N: Restart";
 
         } else if (stage == MARS) {
             controls =
