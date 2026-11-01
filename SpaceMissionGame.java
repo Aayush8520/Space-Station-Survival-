@@ -245,9 +245,12 @@ private double marsAstronautX = 750;
             rocketX += speed;
         }
 
-        if (up || down || left || right) {
-            fuel -= 0.025;
-        }
+        if (tryingToMove) {
+    fuel = Math.max(
+            0,
+            fuel - getModeFuelUsage()
+    );
+}
 
         oxygen -= 0.006;
         energy -= 0.004;
