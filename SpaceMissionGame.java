@@ -338,7 +338,7 @@ private double getModeSpeed() {
     return 4.0;
 }
 
-// Aayush: fuel consumed by each spacecraft travel mode
+//  fuel consumed by each spacecraft travel mode
 private double getModeFuelUsage() {
     if (travelMode == ECO_MODE) {
         return 0.012;
@@ -349,6 +349,18 @@ private double getModeFuelUsage() {
     }
 
     return 0.025;
+}
+//  name of the currently selected travel mode
+private String getTravelModeName() {
+    if (travelMode == ECO_MODE) {
+        return "ECO";
+    }
+
+    if (travelMode == BOOST_MODE) {
+        return "BOOST";
+    }
+
+    return "NORMAL";
 }
     private void resetAsteroids() {
         for (int i = 0;
