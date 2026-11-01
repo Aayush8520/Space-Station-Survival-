@@ -17,7 +17,10 @@ public class SpaceMissionGame extends JPanel
     private static final int MARS = 5;
     private static final int WIN = 6;
     private static final int LOSE = 7;
-
+ 
+private static final int ECO_MODE = 0;
+private static final int NORMAL_MODE = 1;
+private static final int BOOST_MODE = 2;
     private int stage = READY;
     private int stageTimer = 0;
     private int score = 0;
