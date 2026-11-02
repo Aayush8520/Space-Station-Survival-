@@ -96,11 +96,25 @@ public class SpaceMissionGame extends JPanel
 
     // Crew: a generic list of Astronaut objects (Sky the Engineer, Rain the Photographer)
     private final List<Astronaut> crew = new ArrayList<>();
-    private Engineer engineer;
-    private Photographer photographer;
-    private SolarPanel panel = new SolarPanel();
-    private int activeIndex = 0;
-    private int walkTimer = 0;
+   private Engineer engineer;
+private Photographer photographer;
+
+private SolarPanel panel = new SolarPanel();
+private OxygenGenerator oxygenGenerator = new OxygenGenerator();
+private Camera camera = new Camera();
+
+private Container<MarsSample> collectedSamples = new Container<>();
+
+private final MarsSample[] marsSamples = {
+        new MarsSample("Basalt Rock"),
+        new MarsSample("Iron-Rich Soil"),
+        new MarsSample("Ice Deposit")
+};
+
+private int nextSample = 0;
+
+private int activeIndex = 0;
+private int walkTimer = 0;
 
     // Mars exploration: the State pattern context lives in SurfaceWalker
     private final SurfaceWalker walker = new SurfaceWalker();
@@ -487,9 +501,14 @@ public class SpaceMissionGame extends JPanel
             equipmentBroken = true;
             equipment -= 25;
 
+            panel.damage(100);
+oxygenGenerator.damage(100);
+camera.damage(100);
+
             message =
                     "Equipment failure! Press R to repair";
         }
+
 
         // Lambda: move every asteroid
         asteroids.forEach(a -> a.move(random));
@@ -1911,7 +1930,8 @@ private String getTravelModeName() {
             Astronaut active = activeAstronaut();
             String role = active == engineer ? "Engineer" : "Photographer";
             String status = "Active: " + active.getName() + " (" + role + ")"
-                    + "   Photos: " + photographer.getPhotosTaken();
+        + "   Photos: " + photographer.getPhotosTaken()
+        + "   Samples: " + collectedSamples.size() + "/3";
             g.drawString(status, 832, 134);
         }
 
@@ -2099,9 +2119,15 @@ private String getTravelModeName() {
         hardLanding = false;
 
         createCrew();
-        panel = new SolarPanel();
-        resetAsteroids();
-        requestFocusInWindow();
+
+panel = new SolarPanel();
+oxygenGenerator = new OxygenGenerator();
+camera = new Camera();
+
+collectedSamples = new Container<>();
+nextSample = 0;
+
+resetAsteroids();
     }
 
     @Override
@@ -2177,6 +2203,9 @@ private String getTravelModeName() {
 
                 engineer.repairEquipment(panel);
 
+                oxygenGenerator.repair(35);
+camera.repair(35);
+
                 equipment = Math.min(100, equipment + 35);
                 equipmentBroken = false;
 
@@ -2220,6 +2249,17 @@ private String getTravelModeName() {
                 message = "Not enough energy to take a photo";
             }
         }
+
+        // C: collect Mars samples
+if (pressedKey == KeyEvent.VK_C && stage == EXPLORE) {
+    if (nextSample < marsSamples.length) {
+        collectedSamples.add(marsSamples[nextSample]);
+        message = "Collected: " + marsSamples[nextSample].getName();
+        nextSample++;
+    } else {
+        message = "All 3 Mars samples collected!";
+    }
+}
 
         if (pressedKey == KeyEvent.VK_N) {
             restartGame();
