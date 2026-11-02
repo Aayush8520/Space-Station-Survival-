@@ -2299,6 +2299,10 @@ if (emergencyActive) {
 
         equipmentBroken = false;
 
+ // Reset Mission Control Emergency System
+          emergencyActive = false;
+          emergencyCompleted = false; 
+
         up = false;
         down = false;
         left = false;
