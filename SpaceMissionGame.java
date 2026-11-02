@@ -210,6 +210,21 @@ private double marsAstronautX = 750;
         double speed =
                 equipmentBroken ? 1.8 : 4.0;
 
+        // Trigger the emergency once during space travel
+if (!emergencyCompleted
+        && rocketX >= EMERGENCY_TRIGGER_X) {
+
+    emergencyActive = true;
+
+    message =
+            "MISSION EMERGENCY! Press S for Safe Route or D for Dangerous Route";
+}
+
+// Pause the mission until a route is selected
+if (emergencyActive) {
+    return;
+}
+
         if (up && rocketY > 95) {
             rocketY -= speed;
         }
@@ -2094,6 +2109,59 @@ if (marsLanded && marsExitTimer <= 0) {
                 58,
                 690
         );
+        // Mission Control Emergency choice box
+if (emergencyActive) {
+    g.setColor(new Color(5, 15, 28, 235));
+    g.fillRoundRect(245, 235, 610, 190, 22, 22);
+
+    g.setColor(new Color(255, 185, 45));
+    g.setStroke(new BasicStroke(4));
+    g.drawRoundRect(245, 235, 610, 190, 22, 22);
+
+    g.setColor(Color.WHITE);
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.BOLD,
+                    28
+            )
+    );
+
+    g.drawString(
+            "MISSION CONTROL EMERGENCY",
+            320,
+            285
+    );
+
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    17
+            )
+    );
+
+    g.drawString(
+            "S - Safe Route: uses 20% extra fuel",
+            330,
+            330
+    );
+
+    g.drawString(
+            "D - Dangerous Route: may damage equipment",
+            330,
+            365
+    );
+
+    g.setColor(new Color(255, 210, 75));
+    g.drawString(
+            "Choose a route to continue the mission",
+            365,
+            402
+    );
+
+    g.setStroke(new BasicStroke(1));
+}
         g.translate(0, 14);
     }
 
@@ -2255,7 +2323,50 @@ if (marsLanded && marsExitTimer <= 0) {
     stageTimer = 100;
     message = "Sky and Rain are waving before boarding";
 }
+    // Safe route: uses extra fuel but avoids equipment damage
+if (stage == SPACE
+        && emergencyActive
+        && pressedKey == KeyEvent.VK_S) {
 
+    if (fuel >= 20) {
+        fuel -= 20;
+
+        emergencyActive = false;
+        emergencyCompleted = true;
+
+        message =
+                "SAFE ROUTE selected - 20% extra fuel used";
+
+    } else {
+        message =
+                "Not enough fuel for Safe Route - press D for Dangerous Route";
+    }
+}
+
+// Dangerous route: saves fuel but may damage equipment
+if (stage == SPACE
+        && emergencyActive
+        && pressedKey == KeyEvent.VK_D) {
+
+    emergencyActive = false;
+    emergencyCompleted = true;
+
+    if (random.nextBoolean()) {
+        equipment = Math.max(
+                0,
+                equipment - 30
+        );
+
+        equipmentBroken = true;
+
+        message =
+                "DANGEROUS ROUTE caused equipment damage!";
+
+    } else {
+        message =
+                "DANGEROUS ROUTE successful - no damage";
+    }
+}
         if (pressedKey == KeyEvent.VK_UP) {
             up = true;
         }
