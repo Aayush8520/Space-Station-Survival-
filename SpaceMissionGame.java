@@ -37,6 +37,11 @@ public class SpaceMissionGame extends JPanel
     private boolean left;
     private boolean right;
     private boolean equipmentBroken = false;
+    
+    // Mission Control Emergency System
+private boolean emergencyActive = false;
+private boolean emergencyCompleted = false;
+private static final double EMERGENCY_TRIGGER_X = 450;
 
     private String message =
             "Press ENTER to begin the Mars mission";
