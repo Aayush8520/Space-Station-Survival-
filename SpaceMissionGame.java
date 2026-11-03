@@ -1944,10 +1944,10 @@ private String getTravelModeName() {
         // controls below the top dashboard, away from feet and footprints.
         if (stage < SPACE) {
             g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(55, 650, 292, 34, 12, 12);
+            g.fillRoundRect(55, 660, 210, 34, 12, 12);
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            g.drawString("ENTER: Start    N: Restart", 70, 672);
+            g.drawString("ENTER: Start    N: Restart", 70, 682);
         } else if (stage == MARS || stage == EXPLORE
                 || ((stage == WIN || stage == LOSE) && reachedMars)) {
             // The resource report occupies x=20..300, so these two panels
