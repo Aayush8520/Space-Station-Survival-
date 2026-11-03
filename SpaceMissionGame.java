@@ -1954,7 +1954,7 @@ private String getTravelModeName() {
             // sit alongside it without covering the Martian ground.
             g.setColor(new Color(10, 30, 48, 215));
             g.fillRoundRect(315, 113, 495, 32, 12, 12);
-            g.fillRoundRect(820, 113, 260, 32, 12, 12);
+            g.fillRoundRect(20, 650, 275, 32, 12, 12);
 
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 11));
@@ -1968,7 +1968,7 @@ private String getTravelModeName() {
             String status = "Active: " + active.getName() + " (" + role + ")"
         + "   Photos: " + photographer.getPhotosTaken()
         + "   Samples: " + collectedSamples.size() + "/3";
-            g.drawString(status, 832, 134);
+            g.drawString(status, 32, 671);
         }
 
         if (stage == SPACE) {
