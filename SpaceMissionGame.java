@@ -1973,8 +1973,8 @@ private String getTravelModeName() {
 
         if (stage == SPACE) {
             g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(45, 650, 520, 34, 12, 12);
-            g.fillRoundRect(775, 650, 280, 34, 12, 12);
+            g.fillRoundRect(45, 650, 410, 34, 12, 12);
+            g.fillRoundRect(775, 650, 210, 34, 12, 12);
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 12));
             g.drawString("ARROWS: Fly   1: Eco   2: Normal   3: Boost   R: Repair   N: Restart", 58, 672);
@@ -2172,8 +2172,8 @@ if (emergencyActive) {
         stageTimer = 0;
         score = 0;
 
-        rocketX = 770;
-        rocketY = 545;
+        rocketX = 775;
+        rocketY = 525;
 
         astronautX = 400;
         astronautY = 610;
