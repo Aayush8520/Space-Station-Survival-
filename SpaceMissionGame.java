@@ -1954,7 +1954,7 @@ private String getTravelModeName() {
             // sit alongside it without covering the Martian ground.
             g.setColor(new Color(10, 30, 48, 215));
             g.fillRoundRect(315, 113, 495, 32, 12, 12);
-            g.fillRoundRect(820, 113, 260, 32, 12, 12);
+            g.fillRoundRect(20, 665, 275, 32, 12, 12);
 
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 11));
@@ -1968,13 +1968,13 @@ private String getTravelModeName() {
             String status = "Active: " + active.getName() + " (" + role + ")"
         + "   Photos: " + photographer.getPhotosTaken()
         + "   Samples: " + collectedSamples.size() + "/3";
-            g.drawString(status, 832, 134);
+            g.drawString(status, 32, 686);
         }
 
         if (stage == SPACE) {
             g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(45, 650, 520, 34, 12, 12);
-            g.fillRoundRect(775, 650, 280, 34, 12, 12);
+            g.fillRoundRect(45, 650, 410, 34, 12, 12);
+            g.fillRoundRect(775, 650, 210, 34, 12, 12);
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 12));
             g.drawString("ARROWS: Fly   1: Eco   2: Normal   3: Boost   R: Repair   N: Restart", 58, 672);
@@ -2172,8 +2172,8 @@ if (emergencyActive) {
         stageTimer = 0;
         score = 0;
 
-        rocketX = 770;
-        rocketY = 545;
+        rocketX = 775;
+        rocketY = 525;
 
         astronautX = 400;
         astronautY = 610;
