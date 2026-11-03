@@ -1992,11 +1992,6 @@ private String getTravelModeName() {
             g.fillRoundRect(920, 660, (int)(120 * landingSpeed / 9.0), 10, 6, 6);
         }
 
-        g.drawString(
-                controls,
-                58,
-                690
-        );
         // Mission Control Emergency choice box
 if (emergencyActive) {
     g.setColor(new Color(5, 15, 28, 235));
