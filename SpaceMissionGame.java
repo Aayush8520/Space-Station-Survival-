@@ -429,7 +429,7 @@ private int walkTimer = 0;
         reachedExplore = true;
         marsStepTimer = 0;
         walker.reset();
-        message = "Explore Mars! SPACE jumps, P takes a photo, Q switches astronaut";
+        message = "Explore Mars!  ARROWS: Move   SPACE: Jump   Q: Switch   P: Photo   C: Sample   R: Repair   N: Restart";
     }
 
     private void updateExploration() {
@@ -1953,15 +1953,12 @@ private String getTravelModeName() {
             // The resource report occupies x=20..300, so these two panels
             // sit alongside it without covering the Martian ground.
             g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(315, 113, 495, 32, 12, 12);
-            g.fillRoundRect(20, 665, 275, 32, 12, 12);
+           
+            g.fillRoundRect(20, 665, 305, 32, 12, 12);
 
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 11));
-            String controls = stage == EXPLORE
-                    ?"ARROWS: Move  SPACE: Jump  Q: Switch  P: Photo  C: Sample  R: Repair  N: Restart"
-                    : "MARS LANDED   N: Restart";
-            g.drawString(controls, 328, 134);
+           
 
             Astronaut active = activeAstronaut();
             String role = active == engineer ? "Engineer" : "Photographer";
