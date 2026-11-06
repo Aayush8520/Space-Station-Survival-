@@ -76,9 +76,14 @@ public class SpaceMissionGame extends JPanel
     private boolean left;
     private boolean right;
     private boolean equipmentBroken = false;
+    
+    // Mission Control Emergency System
+private boolean emergencyActive = false;
+private boolean emergencyCompleted = false;
+private static final double EMERGENCY_TRIGGER_X = 450;
 
     private String message =
-            "Press ENTER to begin the Mars mission";
+            "Mars mission ready";
 
     private final int[] starX = new int[90];
     private final int[] starY = new int[90];
@@ -202,6 +207,11 @@ private int walkTimer = 0;
                 );
     }
 
+    // Same rounding as the resource bars at the top, so the numbers always match.
+    private int barPercent(double value) {
+        return (int) Math.max(0, Math.min(100, value));
+    }
+
     private void drawCollectorReport(Graphics2D g) {
 
         if (resourceHistory.isEmpty() ||
@@ -209,12 +219,13 @@ private int walkTimer = 0;
             return;
         }
 
+        // Statistics for the whole mission, built with a stream and a collector
         Map<String, DoubleSummaryStatistics> report =
                 createResourceReport();
 
         g.setColor(new Color(10, 30, 48, 220));
         g.fillRoundRect(
-                20, 100, 280, 110, 12, 12
+                20, 100, 280, 124, 12, 12
         );
 
         g.setColor(Color.WHITE);
@@ -239,40 +250,27 @@ private int walkTimer = 0;
                 "Equipment"
         };
 
+        // Current values: exactly what the bars at the top show right now
+        double[] current = {
+                fuel,
+                oxygen,
+                energy,
+                equipment
+        };
+
         for (int i = 0; i < names.length; i++) {
 
             DoubleSummaryStatistics stats =
                     report.get(names[i]);
 
+            String line = names[i] + ": " + barPercent(current[i]) + "%";
+
             if (stats != null) {
-
-                int column = i % 2;
-                int row = i / 2;
-
-                int x = 35 + column * 135;
-                int y = 153 + row * 25;
-
-                g.drawString(
-                        names[i] + ": " +
-                                String.format(
-                                        "%.1f",
-                                        stats.getAverage()
-                                ) + "%",
-                        x,
-                        y
-                );
+                line += "    (sampled average " + barPercent(stats.getAverage()) + "%)";
             }
+
+            g.drawString(line, 35, 148 + i * 20);
         }
-
-        g.setFont(
-                new Font("SansSerif", Font.PLAIN, 10)
-        );
-
-        g.drawString(
-                "Samples: " + (resourceHistory.size() / 4),
-                35,
-                197
-        );
     }
 
     private void createCrew() {
@@ -396,7 +394,7 @@ private int walkTimer = 0;
             if (up) landingSpeed = Math.max(1.0, landingSpeed - 0.08);
             if (down) landingSpeed = Math.min(9.0, landingSpeed + 0.08);
             marsRocketY += landingSpeed;
-            message = "UP: Slow Down   DOWN: Speed Up";
+            message = "Victory rocket is landing on Mars";
             if (marsRocketY >= 545) {
                 marsRocketY = 545;
                 marsLanded = true;
@@ -424,7 +422,7 @@ private int walkTimer = 0;
         reachedExplore = true;
         marsStepTimer = 0;
         walker.reset();
-        message = "Explore Mars! SPACE jumps, P takes a photo, Q switches astronaut";
+        message = "Explore Mars!";
     }
 
     private void updateExploration() {
@@ -465,6 +463,21 @@ private int walkTimer = 0;
             message = "Cannot fly - the fuel tank is empty";
             return;
         }
+
+        // Trigger the emergency once during space travel
+if (!emergencyCompleted
+        && rocketX >= EMERGENCY_TRIGGER_X) {
+
+    emergencyActive = true;
+
+    message =
+            "MISSION EMERGENCY! Press S for Safe Route or D for Dangerous Route";
+}
+
+// Pause the mission until a route is selected
+if (emergencyActive) {
+    return;
+}
 
         if (up && rocketY > 95) {
             rocketY -= speed;
@@ -1159,50 +1172,66 @@ private String getTravelModeName() {
         // Rotation value for both planets
         double spin = System.currentTimeMillis() * 0.0015;
 
-        // Blue planet
-        int bluePlanetX = 165;
-        int bluePlanetY = 190;
+        // Rotating teal-and-gold spiral galaxy
+        int galaxyX = 750;
+        int galaxyY = 205;
 
-        // Blue atmospheric glow
-        g.setColor(new Color(40, 190, 255, 55));
-        g.fillOval(bluePlanetX - 45, bluePlanetY - 45, 90, 90);
-
-        // Shaded blue planet
-        RadialGradientPaint bluePlanetPaint = new RadialGradientPaint(
-                bluePlanetX - 12,
-                bluePlanetY - 15,
-                55,
-                new float[]{0.0f, 0.65f, 1.0f},
+        RadialGradientPaint galaxyGlow = new RadialGradientPaint(
+                galaxyX, galaxyY, 75,
+                new float[]{0.0f, 0.45f, 1.0f},
                 new Color[]{
-                        new Color(75, 220, 255),
-                        new Color(0, 145, 220),
-                        new Color(0, 55, 135)
-                }
-        );
-        g.setPaint(bluePlanetPaint);
-        g.fillOval(bluePlanetX - 37, bluePlanetY - 37, 74, 74);
+                        new Color(255, 220, 110, 120),
+                        new Color(20, 190, 190, 65),
+                        new Color(0, 80, 110, 0)
+                });
+        g.setPaint(galaxyGlow);
+        g.fillOval(galaxyX - 75, galaxyY - 75, 150, 150);
 
-        g.setColor(new Color(35, 225, 175));
-        g.fillOval(
-                bluePlanetX + (int) (Math.cos(spin) * 19) - 8,
-                bluePlanetY + (int) (Math.sin(spin) * 10) - 5,
-                16,
-                10
-        );
-        g.fillOval(
-                bluePlanetX + (int) (Math.cos(spin + 2.5) * 22) - 6,
-                bluePlanetY + (int) (Math.sin(spin + 2.5) * 13) - 4,
-                12,
-                8
-        );
+        Graphics2D spiralGraphics = (Graphics2D) g.create();
+        spiralGraphics.rotate(spin * 0.25, galaxyX, galaxyY);
+        spiralGraphics.setColor(new Color(25, 205, 195, 165));
+        spiralGraphics.setStroke(new BasicStroke(10, BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND));
+        spiralGraphics.drawArc(galaxyX - 62, galaxyY - 31, 124, 62, 15, 235);
+        spiralGraphics.drawArc(galaxyX - 62, galaxyY - 31, 124, 62, 195, 235);
 
-        g.setColor(new Color(80, 200, 255));
-        g.setStroke(new BasicStroke(2));
-        g.drawOval(bluePlanetX - 37, bluePlanetY - 37, 74, 74);
+        spiralGraphics.setColor(new Color(105, 245, 225, 195));
+        spiralGraphics.setStroke(new BasicStroke(7, BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND));
+        spiralGraphics.drawArc(galaxyX - 45, galaxyY - 24, 90, 48, 30, 225);
+        spiralGraphics.drawArc(galaxyX - 45, galaxyY - 24, 90, 48, 210, 225);
+
+        spiralGraphics.setColor(new Color(255, 196, 75, 220));
+        spiralGraphics.setStroke(new BasicStroke(5, BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND));
+        spiralGraphics.drawArc(galaxyX - 28, galaxyY - 16, 56, 32, 35, 230);
+        spiralGraphics.drawArc(galaxyX - 28, galaxyY - 16, 56, 32, 215, 230);
+        spiralGraphics.dispose();
+
+        RadialGradientPaint galaxyCore = new RadialGradientPaint(
+                galaxyX, galaxyY, 25,
+                new float[]{0.0f, 0.45f, 1.0f},
+                new Color[]{
+                        new Color(255, 255, 235),
+                        new Color(255, 203, 90),
+                        new Color(20, 190, 180, 0)
+                });
+        g.setPaint(galaxyCore);
+        g.fillOval(galaxyX - 25, galaxyY - 25, 50, 50);
+
+        int[][] galaxyStars = {
+                {-66, -25}, {-54, 39}, {-30, -58}, {18, -61},
+                {55, -35}, {67, 20}, {38, 54}, {-20, 65}
+        };
+        g.setColor(new Color(220, 255, 245));
+        for (int[] star : galaxyStars) {
+            g.fillOval(galaxyX + star[0], galaxyY + star[1], 3, 3);
+        }
+        g.setStroke(new BasicStroke(1));
 
         // Detailed rotating purple planet
-        int purplePlanetX = 695;
-        int purplePlanetY = 205;
+        int purplePlanetX = 140;
+        int purplePlanetY = 460;
 
         // Outer glow layers
         g.setColor(new Color(125, 55, 210, 25));
@@ -1825,6 +1854,25 @@ private String getTravelModeName() {
         }
     }
 
+    private String getControlsText() {
+        if (emergencyActive) {
+            return "";   // the emergency box shows its own choices
+        }
+        if (stage < SPACE) {
+            return "ENTER: Start   N: Restart";
+        }
+        if (stage == SPACE) {
+            return "ARROWS: Fly   1: Eco   2: Normal   3: Boost   R: Repair   N: Restart";
+        }
+        if (stage == MARS && !marsLanded) {
+            return "UP: Slow down   DOWN: Speed up   N: Restart";
+        }
+        if (stage == EXPLORE) {
+            return "ARROWS: Move   SPACE: Jump   Q: Switch   P: Photo   C: Sample   R: Repair   N: Restart";
+        }
+        return "N: Restart";
+    }
+
     private void drawDashboard(Graphics2D g) {
         g.translate(0, -14);
         g.setColor(
@@ -1868,6 +1916,17 @@ private String getTravelModeName() {
         // Status message (needed for photo, switch and repair feedback)
         g.drawString(message, 42, 74);
 
+        // Controls for the current stage, in the top bar under the resources
+        String controls = getControlsText();
+        g.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        g.setColor(new Color(190, 215, 230));
+        FontMetrics controlMetrics = g.getFontMetrics();
+        g.drawString(
+                controls,
+                1062 - controlMetrics.stringWidth(controls),
+                74
+        );
+
         drawBar(
                 g,
                 350,
@@ -1906,42 +1965,31 @@ private String getTravelModeName() {
 
         // Keep the galaxy clear of bottom instructions. On Mars, place compact
         // controls below the top dashboard, away from feet and footprints.
-        if (stage < SPACE) {
-            g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(55, 650, 292, 34, 12, 12);
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            g.drawString("ENTER: Start    N: Restart", 70, 672);
-        } else if (stage == MARS || stage == EXPLORE
+        if (stage == MARS || stage == EXPLORE
                 || ((stage == WIN || stage == LOSE) && reachedMars)) {
             // The resource report occupies x=20..300, so these two panels
             // sit alongside it without covering the Martian ground.
             g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(315, 113, 495, 32, 12, 12);
-            g.fillRoundRect(820, 113, 260, 32, 12, 12);
+           
+            g.fillRoundRect(20, 665, 305, 32, 12, 12);
 
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 11));
-            String controls = stage == EXPLORE
-                    ?"ARROWS: Move   SPACE: Jump   Q: Switch   P: Photo   R: Repair   N: Restart"
-                    : "MARS LANDED   N: Restart";
-            g.drawString(controls, 328, 134);
+           
 
             Astronaut active = activeAstronaut();
             String role = active == engineer ? "Engineer" : "Photographer";
             String status = "Active: " + active.getName() + " (" + role + ")"
         + "   Photos: " + photographer.getPhotosTaken()
         + "   Samples: " + collectedSamples.size() + "/3";
-            g.drawString(status, 832, 134);
+            g.drawString(status, 32, 686);
         }
 
         if (stage == SPACE) {
             g.setColor(new Color(10, 30, 48, 215));
-            g.fillRoundRect(45, 650, 520, 34, 12, 12);
-            g.fillRoundRect(775, 650, 280, 34, 12, 12);
+            g.fillRoundRect(775, 650, 210, 34, 12, 12);
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 12));
-            g.drawString("ARROWS: Fly   1: Eco   2: Normal   3: Boost   R: Repair   N: Restart", 58, 672);
             g.drawString("MODE: " + getTravelModeName() + "   SPEED: "
                     + String.format("%.1f", currentRocketSpeed), 792, 672);
         } else if (stage == MARS && !marsLanded) {
@@ -1956,6 +2004,59 @@ private String getTravelModeName() {
             g.fillRoundRect(920, 660, (int)(120 * landingSpeed / 9.0), 10, 6, 6);
         }
 
+        // Mission Control Emergency choice box
+if (emergencyActive) {
+    g.setColor(new Color(5, 15, 28, 235));
+    g.fillRoundRect(245, 235, 610, 190, 22, 22);
+
+    g.setColor(new Color(255, 185, 45));
+    g.setStroke(new BasicStroke(4));
+    g.drawRoundRect(245, 235, 610, 190, 22, 22);
+
+    g.setColor(Color.WHITE);
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.BOLD,
+                    28
+            )
+    );
+
+    g.drawString(
+            "MISSION CONTROL EMERGENCY",
+            320,
+            285
+    );
+
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    17
+            )
+    );
+
+    g.drawString(
+            "S - Safe Route: uses 20% extra fuel",
+            330,
+            330
+    );
+
+    g.drawString(
+            "D - Dangerous Route: may damage equipment",
+            330,
+            365
+    );
+
+    g.setColor(new Color(255, 210, 75));
+    g.drawString(
+            "Choose a route to continue the mission",
+            365,
+            402
+    );
+
+    g.setStroke(new BasicStroke(1));
+}
         g.translate(0, 14);
     }
 
@@ -2083,8 +2184,8 @@ private String getTravelModeName() {
         stageTimer = 0;
         score = 0;
 
-        rocketX = 770;
-        rocketY = 545;
+        rocketX = 775;
+        rocketY = 525;
 
         astronautX = 400;
         astronautY = 610;
@@ -2096,13 +2197,17 @@ private String getTravelModeName() {
 
         equipmentBroken = false;
 
+ // Reset Mission Control Emergency System
+          emergencyActive = false;
+          emergencyCompleted = false; 
+
         up = false;
         down = false;
         left = false;
         right = false;
 
         message =
-                "Press ENTER to begin the Mars mission";
+                "Mars mission ready";
 
         marsRocketY = -280;
         marsLanded = false;
@@ -2138,22 +2243,67 @@ resetAsteroids();
         if (pressedKey == KeyEvent.VK_ENTER
                 && stage == READY) {
 
-            stage = BOARDING;
-            stageTimer = 100;
-            message = "Sky and Rain are waving before boarding";
-        }
+    stage = BOARDING;
+    stageTimer = 100;
+    message = "Sky and Rain are waving before boarding";
+}
+    // Safe route: uses extra fuel but avoids equipment damage
+if (stage == SPACE
+        && emergencyActive
+        && pressedKey == KeyEvent.VK_S) {
 
-        if (stage == SPACE && pressedKey == KeyEvent.VK_1) {
-            travelMode = ECO_MODE;
-            message = "ECO mode selected";
-        } else if (stage == SPACE && pressedKey == KeyEvent.VK_2) {
-            travelMode = NORMAL_MODE;
-            message = "NORMAL mode selected";
-        } else if (stage == SPACE && pressedKey == KeyEvent.VK_3) {
-            travelMode = BOOST_MODE;
-            message = "BOOST mode selected";
-        }
+    if (fuel >= 20) {
+        fuel -= 20;
 
+        emergencyActive = false;
+        emergencyCompleted = true;
+
+        message =
+                "SAFE ROUTE selected - 20% extra fuel used";
+
+    } else {
+        message =
+                "Not enough fuel for Safe Route - press D for Dangerous Route";
+    }
+}
+
+// Dangerous route: saves fuel but may damage equipment
+if (stage == SPACE
+        && emergencyActive
+        && pressedKey == KeyEvent.VK_D) {
+
+    emergencyActive = false;
+    emergencyCompleted = true;
+
+    if (random.nextBoolean()) {
+        equipment = Math.max(
+                0,
+                equipment - 30
+        );
+
+        equipmentBroken = true;
+
+        message =
+                "DANGEROUS ROUTE caused equipment damage!";
+
+    } else {
+        message =
+                "DANGEROUS ROUTE successful - no damage";
+    }
+} 
+// Spacecraft travel-mode controls
+if (stage == SPACE && pressedKey == KeyEvent.VK_1) {
+    travelMode = ECO_MODE;
+    message = "ECO mode selected";
+
+} else if (stage == SPACE && pressedKey == KeyEvent.VK_2) {
+    travelMode = NORMAL_MODE;
+    message = "NORMAL mode selected";
+
+} else if (stage == SPACE && pressedKey == KeyEvent.VK_3) {
+    travelMode = BOOST_MODE;
+    message = "BOOST mode selected";
+}
         if (pressedKey == KeyEvent.VK_UP) {
             up = true;
         }
@@ -2242,9 +2392,9 @@ camera.repair(35);
                     photoX = (int) walker.getX();
                     photoY = (int) walker.getY();
                 } else {
-                    subject = asteroids.stream()
-                            .anyMatch(a -> Math.abs(a.getX() - rocketX) < 250)
-                            ? "an asteroid field" : "deep space";
+                    boolean nearby = asteroids.stream().anyMatch(a -> Math.abs(a.getX() - rocketX) < 250);
+                    subject = nearby
+                    ? "an asteroid field" : "deep space";
                     photoX = (int) rocketX;
                     photoY = (int) rocketY;
                 }
