@@ -1979,7 +1979,9 @@ private String getTravelModeName() {
         g.drawString(message, 42, 74);
 
         // Controls for the current stage, in the top bar under the resources
-        String controls = getControlsText();
+        String controls = (stage == MARS || stage == EXPLORE)
+        ? "Move astronauts to collect samples."
+        : getControlsText();
         g.setFont(new Font("SansSerif", Font.PLAIN, 12));
         g.setColor(new Color(190, 215, 230));
         FontMetrics controlMetrics = g.getFontMetrics();
