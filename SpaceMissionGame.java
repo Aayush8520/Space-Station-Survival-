@@ -1930,7 +1930,7 @@ private String getTravelModeName() {
             return "UP: Slow down   DOWN: Speed up   N: Restart";
         }
         if (stage == EXPLORE) {
-            return "ARROWS: Move   SPACE: Jump   Q: Switch   P: Photo   C: Sample   R: Repair   N: Restart";
+            return "ARROWS: Move   SPACE: Jump   Q: Switch   P: Photo   N: Restart   (walk over gems to collect samples)";
         }
         return "N: Restart";
     }
@@ -2508,9 +2508,11 @@ camera.repair(35);
                     photoX = (int) walker.getX();
                     photoY = (int) walker.getY();
                 } else {
-                    boolean nearby = asteroids.stream().anyMatch(a -> Math.abs(a.getX() - rocketX) < 250);
-                    subject = nearby
-                    ? "an asteroid field" : "deep space";
+                    List<Asteroid> nearby = asteroids.stream()
+                            .filter(a -> Math.abs(a.getX() - rocketX) < 250)
+                            .collect(Collectors.toList());
+                    subject = nearby.isEmpty()
+                            ? "deep space" : "an asteroid field";
                     photoX = (int) rocketX;
                     photoY = (int) rocketY;
                 }
