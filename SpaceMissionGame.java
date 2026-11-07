@@ -2373,9 +2373,17 @@ camera.repair(35);
                         + " (Q) to take photos";
 
             } else if (energy >= 2) {
-                energy -= 2;
 
-                String subject;
+    try {
+        camera.operate();
+    } catch (MissionException e) {
+        message = e.getMessage();
+        return;
+    }
+
+    energy -= 2;
+
+    String subject;
                 int photoX;
                 int photoY;
 
