@@ -1,6 +1,13 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.function.DoubleSupplier;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import javax.swing.*;
 
 public class SpaceMissionGame extends JPanel
@@ -18,9 +25,89 @@ public class SpaceMissionGame extends JPanel
     private static final int WIN = 6;
     private static final int LOSE = 7;
  
-private static final int ECO_MODE = 0;
-private static final int NORMAL_MODE = 1;
-private static final int BOOST_MODE = 2;
+    // ================================================================
+    // AAYUSH - WEEK 8: STRATEGY PATTERN FOR SPACECRAFT TRAVEL
+    // Each strategy owns its speed, fuel usage and dashboard name.
+    // New travel modes can be added without changing rocket movement.
+    // ================================================================
+    private interface TravelModeStrategy {
+        double getSpeed();
+        double getFuelUsage();
+        String getName();
+    }
+
+    private static final class EcoTravelMode
+            implements TravelModeStrategy {
+        @Override
+        public double getSpeed() {
+            return 2.5;
+        }
+
+        @Override
+        public double getFuelUsage() {
+            return 0.012;
+        }
+
+        @Override
+        public String getName() {
+            return "ECO";
+        }
+    }
+
+    private static final class NormalTravelMode
+            implements TravelModeStrategy {
+        @Override
+        public double getSpeed() {
+            return 4.0;
+        }
+
+        @Override
+        public double getFuelUsage() {
+            return 0.025;
+        }
+
+        @Override
+        public String getName() {
+            return "NORMAL";
+        }
+    }
+
+    private static final class BoostTravelMode
+            implements TravelModeStrategy {
+        @Override
+        public double getSpeed() {
+            return 6.5;
+        }
+
+        @Override
+        public double getFuelUsage() {
+            return 0.060;
+        }
+
+        @Override
+        public String getName() {
+            return "BOOST";
+        }
+    }
+
+    // Immutable telemetry value used by the Week 11/12 pipeline.
+    private static final class FlightReading {
+        private final String mode;
+        private final double speed;
+
+        private FlightReading(String mode, double speed) {
+            this.mode = mode;
+            this.speed = speed;
+        }
+
+        private String getMode() {
+            return mode;
+        }
+
+        private double getSpeed() {
+            return speed;
+        }
+    }
     private int stage = READY;
     private int stageTimer = 0;
     private int score = 0;
@@ -35,10 +122,17 @@ private static final int BOOST_MODE = 2;
     private double energy = 100;
     private double equipment = 100;
 
-    private int travelMode = NORMAL_MODE;
-private double currentRocketSpeed = 0;
-private double landingSpeed = 5.0;
-private boolean hardLanding = false;
+    private TravelModeStrategy travelMode =
+            new NormalTravelMode();
+    private double currentRocketSpeed = 0;
+    private double landingSpeed = 5.0;
+    private boolean hardLanding = false;
+
+    // AAYUSH - WEEK 11: collect one flight reading each second.
+    private final List<FlightReading> flightReadings =
+            new ArrayList<>();
+    private int flightSampleTicks = 0;
+    private String flightReport = "No flight data recorded";
 
     private boolean up;
     private boolean down;
@@ -256,12 +350,16 @@ marsRocketY += landingSpeed;
     }
 }
   private void updateSpaceMission() {
-    double speed = getModeSpeed();
-
-    // Damaged equipment makes the rocket slower
-    if (equipmentBroken) {
-        speed = speed * 0.45;
-    }
+    // ================================================================
+    // AAYUSH - WEEK 9: BEHAVIOUR PARAMETERISATION
+    // The lambda supplies effective speed from the selected strategy
+    // and the current equipment condition.
+    // ================================================================
+    DoubleSupplier effectiveSpeedSupplier =
+            () -> equipmentBroken
+                    ? travelMode.getSpeed() * 0.45
+                    : travelMode.getSpeed();
+    double speed = effectiveSpeedSupplier.getAsDouble();
 
   boolean tryingToMove =
         up || down || left || right;
@@ -298,9 +396,21 @@ if (tryingToMove) {
         if (tryingToMove) {
     fuel = Math.max(
             0,
-            fuel - getModeFuelUsage()
+            fuel - travelMode.getFuelUsage()
     );
 }
+
+        // AAYUSH - WEEK 11: sample spacecraft behaviour once per second.
+        flightSampleTicks++;
+        if (flightSampleTicks >= 60) {
+            flightReadings.add(
+                    new FlightReading(
+                            travelMode.getName(),
+                            currentRocketSpeed
+                    )
+            );
+            flightSampleTicks = 0;
+        }
 
         oxygen -= 0.006;
         energy -= 0.004;
@@ -364,54 +474,54 @@ message = "Approaching the Mars landing site";
             left = false;
             right = false;
 
-            score = (int) (
-                    fuel
-                            + oxygen
-                            + energy
-                            + equipment
-            );
+            // ========================================================
+            // AAYUSH - WEEK 10: PRIMITIVE STREAM MISSION SCORE
+            // ========================================================
+            score = (int) DoubleStream.of(
+                    fuel,
+                    oxygen,
+                    energy,
+                    equipment
+            ).sum();
+
+            createFlightReport();
 
             message =
                     "MARS REACHED! The rocket landed safely";
         }
     }
-// Aayush: speed used by each spacecraft travel mode
-private double getModeSpeed() {
-    if (travelMode == ECO_MODE) {
-        return 2.5;
+    // ================================================================
+    // AAYUSH - WEEK 11: COLLECTORS AND SPACECRAFT RESOURCE ANALYSIS
+    // AAYUSH - WEEK 12: SAFE PARALLEL PROCESSING
+    // FlightReading is immutable. The parallel stream only reads values,
+    // while groupingBy/summarizingDouble combine thread-local results.
+    // No Swing fields or shared resources are mutated by worker threads.
+    // ================================================================
+    private void createFlightReport() {
+        Map<String, DoubleSummaryStatistics> speedByMode =
+                flightReadings.parallelStream()
+                        .collect(Collectors.groupingBy(
+                                FlightReading::getMode,
+                                Collectors.summarizingDouble(
+                                        FlightReading::getSpeed
+                                )
+                        ));
+
+        flightReport = speedByMode.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey()
+                        + " avg "
+                        + String.format(
+                                "%.1f",
+                                entry.getValue().getAverage()
+                        ))
+                .collect(Collectors.joining(" | "));
+
+        if (flightReport.isEmpty()) {
+            flightReport = "No flight data recorded";
+        }
     }
-
-    if (travelMode == BOOST_MODE) {
-        return 6.5;
-    }
-
-    return 4.0;
-}
-
-//  fuel consumed by each spacecraft travel mode
-private double getModeFuelUsage() {
-    if (travelMode == ECO_MODE) {
-        return 0.012;
-    }
-
-    if (travelMode == BOOST_MODE) {
-        return 0.060;
-    }
-
-    return 0.025;
-}
-//  name of the currently selected travel mode
-private String getTravelModeName() {
-    if (travelMode == ECO_MODE) {
-        return "ECO";
-    }
-
-    if (travelMode == BOOST_MODE) {
-        return "BOOST";
-    }
-
-    return "NORMAL";
-}
     private void resetAsteroids() {
         for (int i = 0;
              i < asteroidX.length;
@@ -2231,7 +2341,7 @@ if (stage == SPACE) {
     );
 
     String spacecraftInfo =
-            "MODE: " + getTravelModeName()
+            "MODE: " + travelMode.getName()
                     + "     SPEED: "
                     + String.format("%.1f", currentRocketSpeed);
 
@@ -2299,6 +2409,41 @@ if (stage == MARS && !marsLanded) {
             6
     );
 }
+
+// AAYUSH - WEEK 10/11: compact mission score and flight report.
+if (stage == MARS) {
+    g.setColor(new Color(10, 30, 48, 215));
+    g.fillRoundRect(
+            45,
+            620,
+            390,
+            48,
+            12,
+            12
+    );
+
+    g.setColor(Color.WHITE);
+    g.setFont(
+            new Font(
+                    "SansSerif",
+                    Font.PLAIN,
+                    10
+            )
+    );
+
+    g.drawString(
+            "MISSION SCORE: " + score,
+            58,
+            638
+    );
+
+    g.drawString(
+            "FLIGHT SPEED: " + flightReport,
+            58,
+            655
+    );
+}
+
         g.translate(0, 14);
     }
 
@@ -2434,11 +2579,14 @@ if (stage == MARS && !marsLanded) {
         energy = 100;
         equipment = 100;
 
-// Reset  spacecraft system
-travelMode = NORMAL_MODE;
+// Reset spacecraft system and handout telemetry
+travelMode = new NormalTravelMode();
 currentRocketSpeed = 0;
 landingSpeed = 5.0;
 hardLanding = false;
+flightReadings.clear();
+flightSampleTicks = 0;
+flightReport = "No flight data recorded";
         equipmentBroken = false;
 
         up = false;
@@ -2467,17 +2615,17 @@ hardLanding = false;
 }
 
 if (stage == SPACE && pressedKey == KeyEvent.VK_1) {
-    travelMode = ECO_MODE;
+    travelMode = new EcoTravelMode();
     message = "ECO mode selected - low speed and low fuel usage";
 }
 
 if (stage == SPACE && pressedKey == KeyEvent.VK_2) {
-    travelMode = NORMAL_MODE;
+    travelMode = new NormalTravelMode();
     message = "NORMAL mode selected - balanced travel";
 }
 
 if (stage == SPACE && pressedKey == KeyEvent.VK_3) {
-    travelMode = BOOST_MODE;
+    travelMode = new BoostTravelMode();
     message = "BOOST mode selected - high speed and high fuel usage";
 }
         if (pressedKey == KeyEvent.VK_UP) {
